@@ -29,57 +29,47 @@ function createPromptTemplatesContainer() {
     `;
     container.appendChild(selectPosition);
   
-    const insertButton = document.createElement('button');
-    insertButton.innerText = 'Insert Text';
-    insertButton.onclick = function () {
-      const selectedPosition = selectPosition.value === 'before';
-      insertInputIntoChatbox(textarea.value, selectedPosition);
-    };
-    container.appendChild(insertButton);
-  
     const chooseInputButton = document.createElement('button');
     chooseInputButton.innerText = 'Choose Input Field';
     chooseInputButton.onclick = function () {
-      chooseInputField(textarea.value, selectPosition.value === 'before');
+      enableFieldSelection(textarea.value, selectPosition.value === 'before');
     };
     container.appendChild(chooseInputButton);
   }
   
-  function chooseInputField(text, beforeInput) {
+  function enableFieldSelection(text, beforeInput) {
     const inputFields = document.querySelectorAll('textarea');
-    let selectedInputField = null;
-  
     inputFields.forEach((input) => {
-      input.classList.remove('selected');
       input.addEventListener('click', selectField);
+      input.style.cursor = 'pointer';
+      input.style.border = '2px solid transparent';
     });
   
     function selectField() {
-      selectedInputField = this;
-      inputFields.forEach((otherInput) => {
-        if (otherInput !== selectedInputField) {
-          otherInput.classList.remove('selected');
-        }
+      inputFields.forEach((input) => {
+        input.removeEventListener('click', selectField);
+        input.style.cursor = 'auto';
+        input.style.border = '2px solid transparent';
       });
-      selectedInputField.classList.add('selected');
-      selectedInputField.removeEventListener('click', selectField);
-    }
   
-    if (!selectedInputField) {
-      console.error('No input field is selected');
-    } else {
-      const value = beforeInput ? text + '\n' + selectedInputField.value : selectedInputField.value + '\n' + text;
-      selectedInputField.value = value;
-    }
-  }
+      const selectedInputField = this;
+      selectedInputField.style.border = '2px solid red';
   
-  function insertInputIntoChatbox(text, beforeInput) {
-    const chatInput = document.querySelector('[data-testid="ChatInputBox"] textarea');
-    if (chatInput) {
-      const value = beforeInput ? text + '\n' + chatInput.value : chatInput.value + '\n' + text;
-      chatInput.value = value;
-    } else {
-      console.error('Chat input element not found');
+      selectedInputField.addEventListener('keydown', handleKeyDown);
+  
+      function handleKeyDown(event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+  
+          const value = beforeInput
+            ? text + '\n' + selectedInputField.value
+            : selectedInputField.value + '\n' + text;
+          selectedInputField.value = value;
+  
+          selectedInputField.removeEventListener('keydown', handleKeyDown);
+          selectedInputField.style.border = '2px solid transparent';
+        }
+      }
     }
   }
   
@@ -116,8 +106,8 @@ function createPromptTemplatesContainer() {
   
   if (window.location.href.includes('chat.openai.com')) {
     const container = createPromptTemplatesContainer();
-    document.body.appendChild(container);
     addCustomElements(container);
+    document.body.appendChild(container);
     injectToggleButton();
   }
   
