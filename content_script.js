@@ -1,85 +1,104 @@
 function createPromptTemplatesContainer() {
     const container = document.createElement('div');
     container.id = 'prompt-templates-container';
-    container.style.width = '300px';
-    container.style.height = '100%';
-    container.style.position = 'fixed';
-    container.style.top = '0';
-    container.style.right = '0';
-    container.style.zIndex = '100000';
+    container.style.cssText = `
+      width: 300px;
+      height: 100%;
+      position: fixed;
+      top: 0;
+      right: 0;
+      z-index: 100000;
+    `;
     return container;
   }
   
-  function injectPromptTemplatesContainer() {
-    const container = createPromptTemplatesContainer();
-    document.body.appendChild(container);
+  function addCustomElements(container) {
+    const textarea = document.createElement('textarea');
+    textarea.style.cssText = `
+      width: 100%;
+      height: 100px;
+      margin-bottom: 10px;
+    `;
+    textarea.placeholder = 'Enter your context...';
+    container.appendChild(textarea);
   
-    const localPrompts = getLocalPrompts();
-    if (localPrompts) {
-      updatePromptsHTML(localPrompts);
+    const selectPosition = document.createElement('select');
+    selectPosition.innerHTML = `
+      <option value="before">Before</option>
+      <option value="after">After</option>
+    `;
+    container.appendChild(selectPosition);
+  
+    const insertButton = document.createElement('button');
+    insertButton.innerText = 'Insert Text';
+    insertButton.onclick = function () {
+      const selectedPosition = selectPosition.value === 'before';
+      insertInputIntoChatbox(textarea.value, selectedPosition);
+    };
+    container.appendChild(insertButton);
+  
+    const chooseInputButton = document.createElement('button');
+    chooseInputButton.innerText = 'Choose Input Field';
+    chooseInputButton.onclick = function () {
+      chooseInputField(textarea.value, selectPosition.value === 'before');
+    };
+    container.appendChild(chooseInputButton);
+  }
+  
+  function chooseInputField(text, beforeInput) {
+    const inputFields = document.querySelectorAll('textarea');
+    let selectedInputField = null;
+  
+    inputFields.forEach((input) => {
+      input.classList.remove('selected');
+      input.addEventListener('click', selectField);
+    });
+  
+    function selectField() {
+      selectedInputField = this;
+      inputFields.forEach((otherInput) => {
+        if (otherInput !== selectedInputField) {
+          otherInput.classList.remove('selected');
+        }
+      });
+      selectedInputField.classList.add('selected');
+      selectedInputField.removeEventListener('click', selectField);
+    }
+  
+    if (!selectedInputField) {
+      console.error('No input field is selected');
     } else {
-      setLocalPrompts();
+      const value = beforeInput ? text + '\n' + selectedInputField.value : selectedInputField.value + '\n' + text;
+      selectedInputField.value = value;
     }
   }
   
-  function setLocalPrompts() {
-    // Set the default prompt templates here
-    const defaultPrompts = [
-      {
-        id: 1,
-        title: 'Prompt 1',
-        content: 'Example content 1',
-      },
-      {
-        id: 2,
-        title: 'Prompt 2',
-        content: 'Example content 2',
-      },
-    ];
-  
-    localStorage.setItem('prompts', JSON.stringify(defaultPrompts));
-    updatePromptsHTML(defaultPrompts);
+  function insertInputIntoChatbox(text, beforeInput) {
+    const chatInput = document.querySelector('[data-testid="ChatInputBox"] textarea');
+    if (chatInput) {
+      const value = beforeInput ? text + '\n' + chatInput.value : chatInput.value + '\n' + text;
+      chatInput.value = value;
+    } else {
+      console.error('Chat input element not found');
+    }
   }
   
-  function getLocalPrompts() {
-    const localPrompts = localStorage.getItem('prompts');
-    return localPrompts ? JSON.parse(localPrompts) : null;
-  }
-  
-  function updatePromptsHTML(prompts) {
-    const container = document.getElementById('prompt-templates-container');
-    container.innerHTML = '';
-  
-    prompts.forEach((prompt) => {
-      const promptElement = document.createElement('div');
-      promptElement.className = 'prompt-template';
-  
-      const title = document.createElement('h3');
-      title.textContent = prompt.title;
-      promptElement.appendChild(title);
-  
-      const content = document.createElement('p');
-      content.textContent = prompt.content;
-      promptElement.appendChild(content);
-  
-      container.appendChild(promptElement);
-    });
-  }
-  
-function createToggleButton() {
+  function createToggleButton() {
     const button = document.createElement('button');
     button.id = 'toggle-extension';
-    button.style.width = '30px';
-    button.style.height = '30px';
-    button.style.position = 'fixed';
-    button.style.top = '10px';
-    button.style.right = '10px';
-    button.style.zIndex = '100001';
-    button.style.backgroundColor = '#000';
-    button.style.color = '#FFF';
-    button.style.borderRadius = '50%';
-    button.style.border = 'none';
-    button.style.cursor = 'pointer';
+    button.style.cssText = `
+      width: 30px;
+      height: 30px;
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 100001;
+      background-color: #000;
+      color: #FFF;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+    `;
     button.innerText = '-';
     return button;
   }
@@ -87,20 +106,18 @@ function createToggleButton() {
   function injectToggleButton() {
     const toggleButton = createToggleButton();
     document.body.appendChild(toggleButton);
-    
+  
     toggleButton.addEventListener('click', () => {
       const container = document.getElementById('prompt-templates-container');
-      if (container.style.display === 'none') {
-        container.style.display = 'block';
-        toggleButton.innerHTML = '-';
-      } else {
-        container.style.display = 'none';
-        toggleButton.innerHTML = '+';
-      }
+      container.style.display = container.style.display === 'none' ? 'block' : 'none';
+      toggleButton.innerHTML = container.style.display === 'none' ? '+' : '-';
     });
-}
+  }
   
-if (window.location.href.includes('chat.openai.com')) {
-    injectPromptTemplatesContainer();
+  if (window.location.href.includes('chat.openai.com')) {
+    const container = createPromptTemplatesContainer();
+    document.body.appendChild(container);
+    addCustomElements(container);
     injectToggleButton();
   }
+  
