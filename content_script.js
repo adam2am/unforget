@@ -66,6 +66,41 @@ function createPromptTemplatesContainer() {
     });
   }
   
-  if (window.location.href.includes('chat.openai.com')) {
+function createToggleButton() {
+    const button = document.createElement('button');
+    button.id = 'toggle-extension';
+    button.style.width = '30px';
+    button.style.height = '30px';
+    button.style.position = 'fixed';
+    button.style.top = '10px';
+    button.style.right = '10px';
+    button.style.zIndex = '100001';
+    button.style.backgroundColor = '#000';
+    button.style.color = '#FFF';
+    button.style.borderRadius = '50%';
+    button.style.border = 'none';
+    button.style.cursor = 'pointer';
+    button.innerText = '-';
+    return button;
+  }
+  
+  function injectToggleButton() {
+    const toggleButton = createToggleButton();
+    document.body.appendChild(toggleButton);
+    
+    toggleButton.addEventListener('click', () => {
+      const container = document.getElementById('prompt-templates-container');
+      if (container.style.display === 'none') {
+        container.style.display = 'block';
+        toggleButton.innerHTML = '-';
+      } else {
+        container.style.display = 'none';
+        toggleButton.innerHTML = '+';
+      }
+    });
+}
+  
+if (window.location.href.includes('chat.openai.com')) {
     injectPromptTemplatesContainer();
+    injectToggleButton();
   }
